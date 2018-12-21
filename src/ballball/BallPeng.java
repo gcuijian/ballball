@@ -1,7 +1,6 @@
 package ballball;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -20,31 +19,31 @@ public class BallPeng {
 	
 	private Map<Long, Ball> balls;
 	
+	private BallPeng() {}
+	
+	static BallPeng ballPeng = new BallPeng();
+	
 	//入口类
 	public Map<Long, Ball> isCollision(Map<Long, Ball> balls) {
 		//如果长度为零或者1，不存在碰撞直接返回。
 		if(balls.isEmpty() || balls.size() == 1)
 			return balls;
 		this.balls = balls;
-		int i = -1;
 		keys = new ArrayList<Long>();
-		//将key放入keys，顺便完成了第一轮遍历
-		for (Long key : balls.keySet()) {
+		//将key放入keys，(不要！)顺便完成了第一轮遍历
+		for (Long key : this.balls.keySet()) {
 			keys.add(key);
-			i++;
-			if(i == 0) continue;
-			assessCollision(balls.get(keys.get(0)), balls.get(key));
 		}
 		//如果做出了改变，需要在成员变量里直接做出改变即可返回。
-		if(balls.size() == 2) return this.balls;
-		//将list中的keys从第二项与二项以后的分别对比，然后是三项与以后的分别对比，防止重复比对的情况
-		for (i = 1; i < keys.size(); i++) {
+//		if(balls.size() == 2) return this.balls;
+		//将list中的keys从第1项与二项以后的分别对比，然后是2项与以后的分别对比，防止重复比对的情况
+		for (int i = 0; i < keys.size(); i++) {
 			for (int j = i + 1; j < keys.size(); j++) {
-				assessCollision(balls.get(keys.get(i)), balls.get(keys.get(j)));
+				assessCollision(keys.get(i), keys.get(j));
 			}
 		}
 		
-		return null;
+		return this.balls;
 	}
 	
 	public static void main(String[] args) {
@@ -60,13 +59,27 @@ public class BallPeng {
 	}
 	
 	//对比两个球球是否碰撞，如果碰撞就交给 changeSpeed ，没碰撞就算了
-	private void assessCollision(Ball ball, Ball SecondBall) {
-		System.out.println("比较一次la~");
+	private void assessCollision(Long ball, Long secondBall) {
+		int distance = ((balls.get(ball).getX() - balls.get(secondBall).getX()) *
+					    (balls.get(ball).getX() - balls.get(secondBall).getX())) +
+					   ((balls.get(ball).getY() - balls.get(secondBall).getY()) *
+					    (balls.get(ball).getY() - balls.get(secondBall).getY()));
+		distance = (int) Math.sqrt(distance);
+		if(distance <= ((balls.get(ball).getSize()/2) + (balls.get(secondBall).getSize() / 2))) {
+			changeSpeed(ball, secondBall);
+		}
 	}
 	
 	//对有碰撞的两个球做速度的改变
-	private void changeSpeed(Long key, Long Secondkey) {
+	private void changeSpeed(Long key, Long secondkey) {
+		//碰撞互换速度
+		int speed = balls.get(key).getSpeedX();
+		balls.get(key).setSpeedX(balls.get(secondkey).getSpeedX());
+		balls.get(secondkey).setSpeedX(speed);
 		
+		speed = balls.get(key).getSpeedY();
+		balls.get(key).setSpeedY(balls.get(secondkey).getSpeedY());
+		balls.get(secondkey).setSpeedY(speed);
 	}
 	
 }

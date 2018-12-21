@@ -72,8 +72,13 @@ public class Core {
 			windowWidth = (int) size.getWidth();
 			windowHeight = (int) size.getHeight();
 			
+			try {
+				Thread.sleep(80);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
 			//在这里加小球碰撞
-			
+			balls = BallPeng.ballPeng.isCollision(balls);
 			
 			bp.repaint();
 		}
