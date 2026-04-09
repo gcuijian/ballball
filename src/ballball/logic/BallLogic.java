@@ -29,6 +29,7 @@ public class BallLogic {
 		
 		ball.setX(nextX);
 		ball.setY(nextY);
+		ball.relaxJelly();
 	}
 
 	private int clamp(int value, int min, int max) {

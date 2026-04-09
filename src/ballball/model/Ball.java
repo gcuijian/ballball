@@ -15,6 +15,9 @@ import java.awt.Color;
 
 public class Ball {
 
+	private static final double JELLY_DECAY = 0.72;
+	private static final double JELLY_EPSILON = 0.01;
+
 	private int x;
 	private int y;
 	
@@ -29,6 +32,9 @@ public class Ball {
 	 */
 	private int speedX;
 	private int speedY;
+
+	private double jellyX;
+	private double jellyY;
 	
 	public Ball(int x, int y, int size, Color color, int speedX, int speedY) {
 		super();
@@ -75,6 +81,40 @@ public class Ball {
 	}
 	public void setSpeedY(int speedY) {
 		this.speedY = speedY;
+	}
+	public double getJellyX() {
+		return jellyX;
+	}
+	public double getJellyY() {
+		return jellyY;
+	}
+	public void applyJelly(double normalX, double normalY, double strength) {
+		double compression = Math.min(0.24, 0.08 + (strength * 0.03));
+		double axisX = Math.abs(normalX);
+		double axisY = Math.abs(normalY);
+		double nextJellyX = (-compression * axisX) + (compression * 0.85 * axisY);
+		double nextJellyY = (-compression * axisY) + (compression * 0.85 * axisX);
+		jellyX = preferLargerMagnitude(jellyX, nextJellyX);
+		jellyY = preferLargerMagnitude(jellyY, nextJellyY);
+	}
+	public void relaxJelly() {
+		jellyX = decay(jellyX);
+		jellyY = decay(jellyY);
+	}
+
+	private double decay(double value) {
+		double next = value * JELLY_DECAY;
+		if (Math.abs(next) < JELLY_EPSILON) {
+			return 0;
+		}
+		return next;
+	}
+
+	private double preferLargerMagnitude(double current, double next) {
+		if (Math.abs(next) > Math.abs(current)) {
+			return next;
+		}
+		return current;
 	}
 
 	@Override
