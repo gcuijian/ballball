@@ -1,11 +1,9 @@
 package ballball;
 
 import java.awt.Color;
-import java.awt.Container;
-import java.awt.Dimension;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.ThreadLocalRandom;
 
 import ballball.event.BallEvent;
 import ballball.logic.BallLogic;
@@ -26,19 +24,14 @@ public class Core {
 			Color.GRAY, Color.GREEN, Color.LIGHT_GRAY, Color.MAGENTA, Color.ORANGE,
 			Color.PINK, Color.RED, Color.YELLOW};
 	
-	public static Map<Long, Ball> balls;
-	private static Map<Long, BallLogic> ballLogics;
-	private static AtomicLong idGenerator = new AtomicLong(0);
+	public static final List<Ball> balls = new ArrayList<>();
+	private static final List<BallLogic> ballLogics = new ArrayList<>();
 	
 	public static void main(String[] args) {
-		
 		bj = new BallJFrame();
 		
 		BallEvent ballEvent = new BallEvent();
 		bj.addMouseListener(ballEvent.mouseClick());
-		
-		balls = new ConcurrentHashMap<>();
-		ballLogics = new ConcurrentHashMap<>();
 		
 		//创造面板
 		bp = new BallPanel(balls);
@@ -50,53 +43,50 @@ public class Core {
 	}
 	
 	public static void addBall(int x, int y) {
-		/*
-		 * 点击后触发
-		 */
 		//创造随机的小球
-		//颜色
-		Color color = colors[(int)(Math.random() * colors.length)];
-		//速度，不可两者都为0
+		ThreadLocalRandom random = ThreadLocalRandom.current();
+		Color color = colors[random.nextInt(colors.length)];
 		int speedX = 0;
 		int speedY = 0;
-		while(speedX == 0 && speedY == 0) {
-			speedX = (int)(Math.random() * 21)-10;
-			speedY = (int)(Math.random() * 21)-10;
+		while (speedX == 0 && speedY == 0) {
+			speedX = random.nextInt(-10, 11);
+			speedY = random.nextInt(-10, 11);
 		}
-		//大小
-		int ballSize = ((int)(Math.random() * 60)) + 1;
+		int ballSize = random.nextInt(1, 61);
 		
-		Ball ball = new Ball((x-(ballSize/2)), (y-ballSize), ballSize, color, speedX, speedY);
+		Ball ball = new Ball((x - (ballSize / 2)), (y - ballSize), ballSize, color, speedX, speedY);
 		
-		long id = idGenerator.getAndIncrement();
-		balls.put(id, ball);
-		ballLogics.put(id, new BallLogic(ball));
+		synchronized (balls) {
+			balls.add(ball);
+			ballLogics.add(new BallLogic(ball));
+		}
 	}
 	
 	public static void refresh() {
-		//实时获取窗口大小辅助类
-		while(true) {
-			Container contentPane = bj.getContentPane();
-			Dimension size = contentPane.getSize();
-			windowWidth = (int) size.getWidth();
-			windowHeight = (int) size.getHeight();
+		final long frameNanos = 16_666_667L;
+		while (true) {
+			long frameStart = System.nanoTime();
+			windowWidth = bp.getWidth();
+			windowHeight = bp.getHeight();
 			
-			// 更新小球位置
-			for (BallLogic logic : ballLogics.values()) {
-				logic.update();
+			synchronized (balls) {
+				for (BallLogic logic : ballLogics) {
+					logic.update();
+				}
+				BallPeng.ballPeng.isCollision(balls);
 			}
 			
-			// 处理碰撞
-			BallPeng.ballPeng.isCollision(balls);
-			
-			// 重绘
 			bp.repaint();
 			
-			try {
-				// 约 60 帧
-				Thread.sleep(16);
-			} catch (InterruptedException e) {
-				e.printStackTrace();
+			long elapsed = System.nanoTime() - frameStart;
+			long sleepNanos = frameNanos - elapsed;
+			if (sleepNanos > 0) {
+				try {
+					Thread.sleep(sleepNanos / 1_000_000L, (int) (sleepNanos % 1_000_000L));
+				} catch (InterruptedException e) {
+					Thread.currentThread().interrupt();
+					return;
+				}
 			}
 		}
 	}
