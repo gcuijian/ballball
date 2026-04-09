@@ -2,92 +2,98 @@ package ballball.model;
 
 import java.awt.Color;
 
-/**
- * 
- * <p>位置，大小，
- * 颜色，速度(横向，纵向)，非45°角</p>
- * @ClassName Ball
- * @Description 
- * @Author Cui Jian
- * @version
- * @Date 2018年12月19日 下午7:59:48
- */
-
 public class Ball {
 
 	private static final double JELLY_DECAY = 0.72;
 	private static final double JELLY_EPSILON = 0.01;
 
-	private int x;
-	private int y;
-	
-	//1-100
-	private int size;
-	
-	private Color color;
-	
-	/**
-	 * 根据横竖速度不同决定总速度
-	 * 速度在-10 —— 10之间，可以为零，不可都为零
-	 */
-	private int speedX;
-	private int speedY;
-
+	private double x;
+	private double y;
+	private double previousX;
+	private double previousY;
+	private final int size;
+	private final Color color;
+	private double speedX;
+	private double speedY;
 	private double jellyX;
 	private double jellyY;
-	
-	public Ball(int x, int y, int size, Color color, int speedX, int speedY) {
-		super();
+
+	public Ball(double x, double y, int size, Color color, double speedX, double speedY) {
 		this.x = x;
 		this.y = y;
+		this.previousX = x;
+		this.previousY = y;
 		this.size = size;
 		this.color = color;
 		this.speedX = speedX;
 		this.speedY = speedY;
 	}
-	
-	public int getX() {
+
+	public void beginStep() {
+		previousX = x;
+		previousY = y;
+	}
+
+	public double getX() {
 		return x;
 	}
-	public void setX(int x) {
+
+	public void setX(double x) {
 		this.x = x;
 	}
-	public int getY() {
+
+	public double getY() {
 		return y;
 	}
-	public void setY(int y) {
+
+	public void setY(double y) {
 		this.y = y;
 	}
+
 	public int getSize() {
 		return size;
 	}
-	public void setSize(int size) {
-		this.size = size;
+
+	public double getRadius() {
+		return size / 2.0;
 	}
+
 	public Color getColor() {
 		return color;
 	}
-	public void setColor(Color color) {
-		this.color = color;
-	}
-	public int getSpeedX() {
+
+	public double getSpeedX() {
 		return speedX;
 	}
-	public void setSpeedX(int speedX) {
+
+	public void setSpeedX(double speedX) {
 		this.speedX = speedX;
 	}
-	public int getSpeedY() {
+
+	public double getSpeedY() {
 		return speedY;
 	}
-	public void setSpeedY(int speedY) {
+
+	public void setSpeedY(double speedY) {
 		this.speedY = speedY;
 	}
+
 	public double getJellyX() {
 		return jellyX;
 	}
+
 	public double getJellyY() {
 		return jellyY;
 	}
+
+	public double getInterpolatedCenterX(double alpha) {
+		return lerp(previousX, x, alpha) + getRadius();
+	}
+
+	public double getInterpolatedCenterY(double alpha) {
+		return lerp(previousY, y, alpha) + getRadius();
+	}
+
 	public void applyJelly(double normalX, double normalY, double strength) {
 		double compression = Math.min(0.24, 0.08 + (strength * 0.03));
 		double axisX = Math.abs(normalX);
@@ -97,9 +103,14 @@ public class Ball {
 		jellyX = preferLargerMagnitude(jellyX, nextJellyX);
 		jellyY = preferLargerMagnitude(jellyY, nextJellyY);
 	}
+
 	public void relaxJelly() {
 		jellyX = decay(jellyX);
 		jellyY = decay(jellyY);
+	}
+
+	private double lerp(double start, double end, double alpha) {
+		return start + ((end - start) * alpha);
 	}
 
 	private double decay(double value) {
@@ -116,11 +127,4 @@ public class Ball {
 		}
 		return current;
 	}
-
-	@Override
-	public String toString() {
-		return "Ball [x=" + x + ", y=" + y + ", size=" + size + ", color=" + color + ", speedX=" + speedX + ", speedY="
-				+ speedY + "]";
-	}
-	
 }
