@@ -5,6 +5,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 
+import javax.swing.SwingUtilities;
+import javax.swing.Timer;
+
 import ballball.event.BallEvent;
 import ballball.logic.BallLogic;
 import ballball.logic.BallPeng;
@@ -13,6 +16,8 @@ import ballball.view.BallJFrame;
 import ballball.view.BallPanel;
 
 public class Core {
+
+	private static final int FRAME_DELAY = 16;
 
 	static BallJFrame bj;
 	static BallPanel bp;
@@ -28,6 +33,10 @@ public class Core {
 	private static final List<BallLogic> ballLogics = new ArrayList<>();
 	
 	public static void main(String[] args) {
+		SwingUtilities.invokeLater(Core::startUi);
+	}
+
+	private static void startUi() {
 		bj = new BallJFrame();
 		
 		BallEvent ballEvent = new BallEvent();
@@ -39,7 +48,7 @@ public class Core {
 		bj.add(bp);
 		bj.setVisible(true);
 		
-		refresh();
+		startTimer();
 	}
 	
 	public static void addBall(int x, int y) {
@@ -56,39 +65,28 @@ public class Core {
 		
 		Ball ball = new Ball((x - (ballSize / 2)), (y - ballSize), ballSize, color, speedX, speedY);
 		
-		synchronized (balls) {
-			balls.add(ball);
-			ballLogics.add(new BallLogic(ball));
-		}
+		balls.add(ball);
+		ballLogics.add(new BallLogic(ball));
 	}
 	
-	public static void refresh() {
-		final long frameNanos = 16_666_667L;
-		while (true) {
-			long frameStart = System.nanoTime();
-			windowWidth = bp.getWidth();
-			windowHeight = bp.getHeight();
-			
-			synchronized (balls) {
-				for (BallLogic logic : ballLogics) {
-					logic.update();
-				}
-				BallPeng.ballPeng.isCollision(balls);
-			}
-			
-			bp.repaint();
-			
-			long elapsed = System.nanoTime() - frameStart;
-			long sleepNanos = frameNanos - elapsed;
-			if (sleepNanos > 0) {
-				try {
-					Thread.sleep(sleepNanos / 1_000_000L, (int) (sleepNanos % 1_000_000L));
-				} catch (InterruptedException e) {
-					Thread.currentThread().interrupt();
-					return;
-				}
-			}
+	private static void startTimer() {
+		Timer timer = new Timer(FRAME_DELAY, event -> tick());
+		timer.setCoalesce(true);
+		timer.start();
+	}
+
+	private static void tick() {
+		windowWidth = bp.getWidth();
+		windowHeight = bp.getHeight();
+		if (windowWidth <= 0 || windowHeight <= 0) {
+			return;
 		}
+		
+		for (BallLogic logic : ballLogics) {
+			logic.update();
+		}
+		BallPeng.ballPeng.isCollision(balls);
+		bp.repaint();
 	}
 	
 }

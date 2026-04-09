@@ -28,12 +28,10 @@ public class BallPanel extends JPanel {
 	protected void paintComponent(Graphics g) {
 		super.paintComponent(g);
 		
-		synchronized (balls) {
-			for (Ball ball : balls) {
-				if (ball != null) {
-					g.setColor(ball.getColor());
-					g.fillOval(ball.getX(), ball.getY(), ball.getSize(), ball.getSize());
-				}
+		for (Ball ball : balls) {
+			if (ball != null) {
+				g.setColor(ball.getColor());
+				g.fillOval(ball.getX(), ball.getY(), ball.getSize(), ball.getSize());
 			}
 		}
 		
